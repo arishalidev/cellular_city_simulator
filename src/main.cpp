@@ -16,10 +16,10 @@
 #include "nuke.h"
 
 int main() {
-    std::string inputFile;
+    std::string inputFile = input.txt;
 
-    std::cout << "Please enter input file: ";
-    std::cin >> inputFile;
+    //std::cout << "Please enter input file: ";
+    //std::cin >> inputFile;
     
     //Read in config file and initial region state
     config configSettings = readConfigFile(inputFile);

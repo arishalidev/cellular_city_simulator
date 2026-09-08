@@ -1,10 +1,10 @@
 How to compile and run on cell machines:
 
 1. Clone repository 
-```git clone ```
+```git clone https://github.com/arishalidev/cellular_city_simulator.git```
 
 2. Build program
-```g++ -o project1 -Iinclude -std=c++17 src/*.cpp```
+```g++ -o cellular_city_simulator -Iinclude -std=c++17 src/*.cpp```
 
 3. Run program
-```./project1```
+```./cellular_city_simulator```
