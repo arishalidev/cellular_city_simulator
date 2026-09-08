@@ -1,6 +1,6 @@
 import csv
 
-block_size = 6
+block_size = 12
 cell_map = []
 filename = "../region.csv"
 row_size = block_size * 2 + 1
