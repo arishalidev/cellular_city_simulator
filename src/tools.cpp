@@ -6,7 +6,7 @@
 
 #include "tools.h"
 
-std::map<std::pair<int, int>, std::pair<int, int>>  getAdjacentCoords(std::map<std::pair<int, int>, int> r1, std::map<std::pair<int, int>, int> r2, int con1, int con2) {
+std::map<std::pair<int, int>, std::pair<int, int>>  getAdjacentCoords(std::map<std::pair<int, int>, int>& r1, std::map<std::pair<int, int>, int>& r2, int con1, int con2) {
     
     //Create a new map to store new pairs in
     std::map<std::pair<int, int>, std::pair<int, int>> adjacentCoordsMap;

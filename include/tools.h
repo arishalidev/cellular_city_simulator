@@ -19,6 +19,6 @@ const std::vector<std::pair<int,int>> adjacentCoordsOffset = {
 };
 
 
-std::map<std::pair<int, int>, std::pair<int, int>>  getAdjacentCoords(std::map<std::pair<int, int>, int> r1, std::map<std::pair<int, int>, int> r2, int con1, int con2);
+std::map<std::pair<int, int>, std::pair<int, int>>  getAdjacentCoords(std::map<std::pair<int, int>, int>& r1, std::map<std::pair<int, int>, int>& r2, int con1, int con2);
 std::priority_queue<std::array<int, 4>, std::vector<std::array<int, 4>>, SortOrder> getOrderOfCellGrowth(std::map<std::pair<int, int>, int> region, std::map<std::pair<int, int>, std::pair<int, int>> cells);
 int numOfAdjacentAndSame(std::pair<std::pair<int, int>, int> cell, std::map<std::pair<int, int>, int> region, bool returnTotalPop = false);
