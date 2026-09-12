@@ -25,7 +25,7 @@ void Pollution::calculatePollutionSpread() {
         if(pollutionSource.second != 0) this->pollutionSpread[pollutionSource.first] = pollutionSource.second;
     }
     
-    //Load data forom pollution spread to region state
+    //Load data from pollution spread to region state
     for(const std::pair<std::pair<int, int>, int> regionCell : this->regionStateMap) {
         this->regionStateMap[regionCell.first] = this->pollutionSpread[regionCell.first];
     }
@@ -33,22 +33,20 @@ void Pollution::calculatePollutionSpread() {
     //Track number of changes in pollution spread, exit loop when no more changes
     for(int i = 0; i < 2; i++) {
 
-        //Loop though all sources of pollution
-        for(const std::pair<std::pair<int, int>, int> pollutionSource : this->pollutionSpread) {
-            
-            //Get coordinates of cells that have pollution that can spread
-            std::map<std::pair<int, int>, std::pair<int, int>> pollutedCell = getAdjacentCoords(this->regionStateMap, this->pollutionSpread, 0, 3);
-            pollutedCell.merge(getAdjacentCoords(this->regionStateMap, this->pollutionSpread, 1, 3));
-            pollutedCell.merge(getAdjacentCoords(this->regionStateMap, this->pollutionSpread, 0, 2));
 
-            //Loop though all cells that had pollution spread
-            for(std::pair<std::pair<int, int>, std::pair<int, int>> cell : pollutedCell) {
+        //Get coordinates of cells that have pollution that can spread
+        std::map<std::pair<int, int>, std::pair<int, int>> pollutedCell = getAdjacentCoords(this->regionStateMap, this->pollutionSpread, 0, 3);
+        pollutedCell.merge(getAdjacentCoords(this->regionStateMap, this->pollutionSpread, 1, 3));
+        pollutedCell.merge(getAdjacentCoords(this->regionStateMap, this->pollutionSpread, 0, 2));
 
-                //Spread the pollution
-                if(this->pollutionSpread[cell.second] == 3) this->pollutionSpread[cell.first] = 2;
-                if(this->pollutionSpread[cell.second] == 2) this->pollutionSpread[cell.first] = 1;
-            }
+        //Loop though all cells that had pollution spread
+        for(std::pair<std::pair<int, int>, std::pair<int, int>> cell : pollutedCell) {
+
+            //Spread the pollution
+            if(this->pollutionSpread[cell.second] == 3) this->pollutionSpread[cell.first] = 2;
+            if(this->pollutionSpread[cell.second] == 2) this->pollutionSpread[cell.first] = 1;
         }
+    
     }
     
     //Loop though all pollution, update pollutionState
