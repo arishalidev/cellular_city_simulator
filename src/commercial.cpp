@@ -45,54 +45,65 @@ bool Commercial::applyRules(bool changed) {
     //Stop region from growing if enough goods dont exist
     if(*this->goods < 1) return changed;
 
-    //Get all cells that are adjacent to power lines and have a population of 0
-    std::map<std::pair<int, int>, std::pair<int, int>> growingCells = getAdjacentCoords(this->regionInfo, this->powerlineInfo, 0, 0);
+    //Region state (regionInfo/powerlineInfo) doesn't change until updateRegion()
+    //runs at the end of the timestep, so the set of cells eligible to grow only
+    //needs to be computed once per timestep. Later calls (e.g. from Industrial
+    //growing and producing more goods) reuse the cached queue instead of
+    //rescanning the whole region for adjacency again.
+    if(!this->growthQueueBuilt) {
 
-    //Add cells that are adjacent to each other, and meet criteria
-    const int maxVal = 2;
-    for(int i = 0; i <= maxVal - 1; i++) {
-        for(int j = i; j <= maxVal; j++) {
-            if(j == 0) continue;
-            growingCells.merge(getAdjacentCoords(this->regionInfo, this->regionInfo, i, j));
+        //Get all cells that are adjacent to power lines and have a population of 0
+        std::map<std::pair<int, int>, std::pair<int, int>> growingCells = getAdjacentCoords(this->regionInfo, this->powerlineInfo, 0, 0);
+
+        //Add cells that are adjacent to each other, and meet criteria
+        const int maxVal = 2;
+        for(int i = 0; i <= maxVal - 1; i++) {
+            for(int j = i; j <= maxVal; j++) {
+                if(j == 0) continue;
+                growingCells.merge(getAdjacentCoords(this->regionInfo, this->regionInfo, i, j));
+            }
         }
-    }
-    
-    //Loop though growing cells, delete unqualified ones
-    for (auto cell = growingCells.begin(); cell != growingCells.end(); ) {
-        
-        //Stop cells that have been updated from updating again
-        std::set<std::pair<int, int>>::iterator dupe = this->updatedCells.find(cell->first);
-        if(this->updatedCells.end() != dupe) {
-            cell = growingCells.erase(cell);
-            continue;
-        }
-        
-        //Stop cells that have a population of 1 or more, but are not adjacent to enough populous cells to grow
-        if(this->regionInfo[cell->first] >= 1) {
-            int numOfAdjacent = numOfAdjacentAndSame({cell->first, this->regionInfo[cell->first]}, this->regionInfo);
-            if(!(numOfAdjacent >= this->regionInfo[cell->first]*2)) {
+
+        //Loop though growing cells, delete unqualified ones
+        for (auto cell = growingCells.begin(); cell != growingCells.end(); ) {
+
+            //Stop cells that have been updated from updating again
+            std::set<std::pair<int, int>>::iterator dupe = this->updatedCells.find(cell->first);
+            if(this->updatedCells.end() != dupe) {
                 cell = growingCells.erase(cell);
                 continue;
             }
+
+            //Stop cells that have a population of 1 or more, but are not adjacent to enough populous cells to grow
+            if(this->regionInfo[cell->first] >= 1) {
+                int numOfAdjacent = numOfAdjacentAndSame({cell->first, this->regionInfo[cell->first]}, this->regionInfo);
+                if(!(numOfAdjacent >= this->regionInfo[cell->first]*2)) {
+                    cell = growingCells.erase(cell);
+                    continue;
+                }
+            }
+            ++cell;
         }
-        ++cell;
+
+        this->cellGrowthQueue = getOrderOfCellGrowth(this->regionInfo, growingCells);
+        this->growthQueueBuilt = true;
     }
-    
-    std::priority_queue<std::array<int, 4>, std::vector<std::array<int, 4>>, SortOrder> cellGrowthQueue = getOrderOfCellGrowth(this->regionInfo, growingCells);
 
     //Loop though all cells that met criteria to grow
-    while(!cellGrowthQueue.empty()) {
-        
-        std::pair<int, int> cell = {cellGrowthQueue.top()[2], cellGrowthQueue.top()[3]};
-        cellGrowthQueue.pop();
-        
-        //Stop cell from growing if enough workers or goods dont exist
-        if(*this->workers < 1) continue;
-        if(*this->goods < 1) continue;
+    while(!this->cellGrowthQueue.empty()) {
+
+        //Stop growing if enough workers or goods dont exist. Leave remaining
+        //cells queued (rather than popping and discarding them) so they can
+        //still grow on a later call this timestep if more resources free up.
+        if(*this->workers < 1) break;
+        if(*this->goods < 1) break;
+
+        std::pair<int, int> cell = {this->cellGrowthQueue.top()[2], this->cellGrowthQueue.top()[3]};
+        this->cellGrowthQueue.pop();
 
         //Add cell to new list, increase population
         newRegionInfo[cell] = this->regionInfo[cell] + 1;
-        
+
         this->updatedCells.insert(cell);
         *this->goods -= 1;
         *this->workers -= 1;
@@ -112,6 +123,7 @@ void Commercial::updateRegion() {
     //Clear class varaibles to ensure fresh start for next timestamp
     this->updatedCells.clear();
     this->newRegionInfo.clear();
+    this->growthQueueBuilt = false;
 }
 
 int Commercial::getPopulation(bool specifiedRange, int yStart, int yEnd, int xStart, int xEnd) {
